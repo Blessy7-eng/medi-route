@@ -9,8 +9,6 @@ from src.environment import TrafficEnv
 
 # --- 0. Hackathon Compliance: Mandatory Grader Logs ---
 if 'grader_run' not in st.session_state:
-    # Use sys.executable to ensure we use the same python path as Streamlit
-    # stdout=None and stderr=None allows it to print directly to the container console
     subprocess.Popen(
         [sys.executable, "inference.py"], 
         stdout=None, 
@@ -30,15 +28,32 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🚑 Medi-Route: AI Emergency Response")
-st.subheader("📍 Location: Sangli-Miraj Road (High Density Corridor)")
-st.caption("Simulating North-South Flow at Ganpati Mandir Road Intersection")
+# --- 2. Initialize Environment & Model (Moved UP to prevent NameError) ---
+if 'env' not in st.session_state:
+    st.session_state.env = TrafficEnv(difficulty="medium")
+    st.session_state.total_reward = 0
+    st.session_state.done = False
 
-# --- 2. Sidebar: Controls & Live Analytics ---
+# Define env for easy access in the script
+env = st.session_state.env
+
+@st.cache_resource
+def load_brain():
+    if os.path.exists("medi_route_brain.zip"):
+        return DQN.load("medi_route_brain.zip")
+    return None
+
+model = load_brain()
+
+# --- 3. Sidebar: Controls & Live Analytics ---
 st.sidebar.header("🕹️ Simulation Control")
+
+# Now 'env' is defined, so these lines won't crash
 st.sidebar.subheader("📉 Live Progress")
-st.sidebar.progress(min(env.steps / 50, 1.0)) # Shows a progress bar toward timeout
-st.sidebar.write(f"⏱️ Step: {env.steps} / 50")
+current_steps = getattr(env, 'steps', 0)
+st.sidebar.progress(min(current_steps / 50, 1.0)) 
+st.sidebar.write(f"⏱️ Step: {current_steps} / 50")
+
 difficulty = st.sidebar.selectbox("Select Scenario", ["easy", "medium", "hard"])
 mode = st.sidebar.radio("Control Mode", ["AI Optimized", "Manual Override"])
 
@@ -59,27 +74,16 @@ score_metric = st.sidebar.empty()
 speed_metric = st.sidebar.empty()
 traffic_metric = st.sidebar.empty()
 
-# --- 3. Initialize Environment & Model ---
-if 'env' not in st.session_state:
-    st.session_state.env = TrafficEnv(difficulty="medium")
-    st.session_state.total_reward = 0
-    st.session_state.done = False
+# --- 4. Main UI Layout ---
+st.title("🚑 Medi-Route: AI Emergency Response")
+st.subheader("📍 Location: Sangli-Miraj Road (High Density Corridor)")
+st.caption("Simulating North-South Flow at Ganpati Mandir Road Intersection")
 
-# Load the AI Brain once
-@st.cache_resource
-def load_brain():
-    if os.path.exists("medi_route_brain.zip"):
-        return DQN.load("medi_route_brain.zip")
-    return None
-
-model = load_brain()
-env = st.session_state.env
 grid_placeholder = st.empty()
 signal_col1, signal_col2 = st.columns(2)
 
-# --- 4. Simulation Loop ---
+# --- 5. Simulation Loop ---
 if not st.session_state.done:
-    # Small notice to the judge that logs are being generated
     st.toast("Grader script running in background... Check 'Container Logs' for scoring tags.")
     
     for frame in range(100):
@@ -88,7 +92,7 @@ if not st.session_state.done:
             obs = env.get_observation()
             action, _ = model.predict(obs, deterministic=True)
         elif mode == "AI Optimized":
-            # Heuristic fallback if model isn't trained yet
+            # Heuristic fallback
             action = 0 if any(v.get('ev') and v['dir'] == "NS" for v in env.vehicles) else 1
         else:
             action = manual_action
@@ -130,7 +134,7 @@ if not st.session_state.done:
         if done:
             st.session_state.done = True
             st.balloons()
-            st.success(f"Ambulance Reached Hospital! Total Steps: {frame} 🎉")
+            st.success(f"Ambulance Reached Hospital! Total Steps: {env.steps} 🎉")
             break
 
         time.sleep(0.3)
