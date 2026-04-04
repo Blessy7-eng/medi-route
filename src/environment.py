@@ -4,6 +4,18 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 
+def Vehicle(x, y, is_emergency=False, direction="NS"):
+    """
+    Creates a vehicle dictionary compatible with your current step() logic.
+    """
+    return {
+        'x': x,
+        'y': y,
+        'ev': is_emergency,
+        'dir': direction,
+        'speed': 0
+    }
+
 class TrafficEnv(gym.Env):
     # Inside your TrafficEnv class
     @property
