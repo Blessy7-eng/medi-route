@@ -2,17 +2,24 @@ import streamlit as st
 import time
 import torch
 import os
+import sys
+import subprocess
 from stable_baselines3 import DQN
 from src.environment import TrafficEnv
-import subprocess
 
-# This triggers the mandatory inference logs for the Scaler Grader
+# --- 0. Hackathon Compliance: Mandatory Grader Logs ---
 if 'grader_run' not in st.session_state:
-    st.info("🚀 Initializing Hackathon Grader Logs...")
-    # Runs your inference.py and pipes the output to the container logs
-    subprocess.Popen(["python", "inference.py"])
+    # Use sys.executable to ensure we use the same python path as Streamlit
+    # stdout=None and stderr=None allows it to print directly to the container console
+    subprocess.Popen(
+        [sys.executable, "inference.py"], 
+        stdout=None, 
+        stderr=None, 
+        bufsize=1, 
+        universal_newlines=True
+    )
     st.session_state.grader_run = True
-    
+
 # --- 1. Page Config & Branding ---
 st.set_page_config(page_title="Medi-Route Sangli", layout="wide", page_icon="🚑")
 
@@ -29,10 +36,12 @@ st.caption("Simulating North-South Flow at Ganpati Mandir Road Intersection")
 
 # --- 2. Sidebar: Controls & Live Analytics ---
 st.sidebar.header("🕹️ Simulation Control")
+st.sidebar.subheader("📉 Live Progress")
+st.sidebar.progress(min(env.steps / 50, 1.0)) # Shows a progress bar toward timeout
+st.sidebar.write(f"⏱️ Step: {env.steps} / 50")
 difficulty = st.sidebar.selectbox("Select Scenario", ["easy", "medium", "hard"])
 mode = st.sidebar.radio("Control Mode", ["AI Optimized", "Manual Override"])
 
-# FIX: Move the toggle OUTSIDE the for-loop to avoid DuplicateElementId error
 manual_action = 0
 if mode == "Manual Override":
     is_ew_green = st.sidebar.toggle("Switch to EW Green", value=False)
@@ -70,6 +79,9 @@ signal_col1, signal_col2 = st.columns(2)
 
 # --- 4. Simulation Loop ---
 if not st.session_state.done:
+    # Small notice to the judge that logs are being generated
+    st.toast("Grader script running in background... Check 'Container Logs' for scoring tags.")
+    
     for frame in range(100):
         # 1. Decision Logic
         if mode == "AI Optimized" and model is not None:

@@ -30,72 +30,92 @@ class TrafficEnv(gym.Env):
         )
         self.reset()
 
-    def reset(self, seed=None, options=None):
-        super().reset(seed=seed)
-        self.vehicles = []
-        self.light_state = "NS_GREEN"
+    def reset(self):
+        self.vehicles = [] # Clear the old traffic
+        self.steps = 0     # Reset the clock
         
-        # --- Step 2: Implementing the "Lessons" (Scenarios) ---
-        # 1. Always spawn the Emergency Vehicle
-        self.spawn_vehicle(direction="NS", is_emergency=True)
+        # Randomly decide how many cars to start with
+        num_cars = random.randint(3, 8) 
+        for _ in range(num_cars):
+            self.spawn_vehicle(is_emergency=False)
+            
+        # Always spawn 1 ambulance in a random lane
+        self.spawn_vehicle(is_emergency=True)
         
-        # 2. Spawn normal cars based on difficulty
-        if self.difficulty == "easy":
-            pass # 0 normal cars
-        elif self.difficulty == "medium":
-            for _ in range(5):
-                self.spawn_vehicle(direction=random.choice(["NS", "EW"]), is_emergency=False)
-        elif self.difficulty == "hard":
-            for _ in range(10): # Start with 10
-                self.spawn_vehicle(direction=random.choice(["NS", "EW"]), is_emergency=False)
-        
-        return self.get_observation(), {}
+        return self.get_observation()
 
-    def spawn_vehicle(self, direction="NS", is_emergency=False):
-        if direction == "NS":
-            v = {'x': 5, 'y': 0, 'dir': "NS", 'ev': is_emergency, 'speed': 0}
-        else:
-            v = {'x': 0, 'y': 5, 'dir': "EW", 'ev': is_emergency, 'speed': 0}
-        self.vehicles.append(v)
+    def spawn_vehicle(self, is_emergency=False):
+        # Randomize which lane they start in (0 to 9)
+        start_x = 0 
+        start_y = random.randint(0, 9) 
+        
+        # Randomize the initial distance so they aren't all in a line
+        start_x = random.randint(0, 2) 
+        
+        new_car = Vehicle(start_x, start_y, is_emergency)
+        self.vehicles.append(new_car)
 
     def step(self, action):
+        # 0 = North-South Green, 1 = East-West Green
         self.light_state = "NS_GREEN" if action == 0 else "EW_GREEN"
         
         reward = 0
+        # Keep track of vehicles that are still inside the 10x10 grid
+        active_vehicles = []
+        reached_goal = False
+
+        # 2. Physics & Movement Loop
         for v in self.vehicles:
+            # Check if the light is green for this vehicle's direction
             is_green = (v['dir'] == "NS" and self.light_state == "NS_GREEN") or \
-                       (v['dir'] == "EW" and self.light_state == "EW_GREEN")
+                    (v['dir'] == "EW" and self.light_state == "EW_GREEN")
             
-            # Stop line logic at index 4
+            # Stop line logic at index 4 (The "Intersection Entrance")
             at_stop = (v['dir'] == "NS" and v['y'] == 4) or (v['dir'] == "EW" and v['x'] == 4)
             
+            # Logic: Move if it's green OR if you haven't reached the stop line yet
             if is_green or not at_stop:
                 v['speed'] = 2 if v['ev'] else 1
             else:
-                v['speed'] = 0
+                v['speed'] = 0 # Stuck at Red Light
                 
-            if v['dir'] == "NS": v['y'] += v['speed']
-            else: v['x'] += v['speed']
+            # Update coordinates
+            if v['dir'] == "NS": 
+                v['y'] += v['speed']
+            else: 
+                v['x'] += v['speed']
 
-            # Reward logic
+            # 3. Reward Logic (The "Brain's" Feedback)
             if v['ev']:
-                reward += 2.0 if v['speed'] > 0 else -5.0
+                # Did the ambulance move or is it stuck?
+                reward += 5.0 if v['speed'] > 0 else -10.0 
+                # Check if it reached the finish line
+                if v['x'] >= 9 or v['y'] >= 9:
+                    reached_goal = True
+                    reward += 50.0 # Huge bonus for mission success!
             elif v['speed'] == 0:
-                reward -= 0.1
+                reward -= 0.2 # Small penalty for normal traffic delay
 
-        # --- Hard Scenario: Continuous Spawning (Sangli Market) ---
+            # Only keep vehicles that are still on the grid
+            if v['x'] < 10 and v['y'] < 10:
+                active_vehicles.append(v)
+
+        self.vehicles = active_vehicles
+
+        # 4. Hard Scenario: Continuous Spawning (Sangli Market Style)
         if self.difficulty == "hard":
-            # 30% chance to spawn a new car every single step
             if random.random() < 0.3:
+                # Only spawn a normal car, never a second ambulance during a mission
                 self.spawn_vehicle(direction=random.choice(["NS", "EW"]), is_emergency=False)
 
-        obs = self.get_observation()
-        # Done if ambulance reaches goal OR if 100 steps have passed
-        self.steps = getattr(self, 'steps', 0) + 1
-        reached_goal = any(v['ev'] and (v['x'] >= 9 or v['y'] >= 9) for v in self.vehicles)
+        # 5. Ending the Episode
+        self.steps += 1
+        # Terminate if goal reached or timed out (100 steps)
         done = reached_goal or self.steps >= 100
-        # Add this inside step() in src/environment.py before returning
-        self.vehicles = [v for v in self.vehicles if v['x'] < 10 and v['y'] < 10]
+        
+        obs = self.get_observation()
+        
+        # Return 5 values as required by Gymnasium: obs, reward, terminated, truncated, info
         return obs, reward, done, False, {}
 
     def get_observation(self):
