@@ -74,11 +74,12 @@ def run_task(task_id, difficulty):
     print(f"[END] {task_id} | Final Score: {final_score}")
 
 if __name__ == "__main__":
-    # Ensure variables are set or provide fallbacks for local testing
-    if not API_KEY:
-        print("Warning: HF_TOKEN not set. Local test mode.")
-    
-    # Run the 3 mandatory scenarios
     run_task("Easy_Clear", "easy")
     run_task("Medium_Traffic", "medium")
     run_task("Hard_Sangli_Rush", "hard")
+
+    # CRITICAL: Keep the container alive for the judges
+    print("--- ALL TASKS COMPLETE ---")
+    import subprocess
+    # This keeps the container awake without using CPU
+    subprocess.call(["tail", "-f", "/dev/null"])
