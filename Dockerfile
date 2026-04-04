@@ -4,11 +4,10 @@ FROM python:3.10-slim
 # 2. Set the working directory
 WORKDIR /app
 
-# 3. Install system dependencies (needed for some AI libraries)
+# 3. Install ONLY necessary system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
-    software-properties-common \
     git \
     && rm -rf /var/lib/apt/lists/*
 
@@ -16,13 +15,11 @@ RUN apt-get update && apt-get install -y \
 COPY . /app
 
 # 5. Install Python dependencies
-# We use 'python -m pip' to ensure it's linked to the correct python version
 RUN python -m pip install --no-cache-dir --upgrade pip
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
 # 6. Expose the port Streamlit uses
 EXPOSE 7860
 
-# 7. The most important part: Use 'python -m streamlit' 
-# This avoids the "executable not found" error by calling it through python
+# 7. Start the app via python module to avoid PATH issues
 CMD ["python", "-m", "streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
