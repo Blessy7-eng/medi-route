@@ -2,36 +2,49 @@
 spec_version: 1
 name: medi_route
 type: space
-runtime: fastapi
+runtime: python
 
 metadata:
   name: "Medi-Route"
-  version: "0.1.0"
+  version: "1.0.0"
   description: "AI-powered traffic signal control to prioritize emergency vehicles in high-density urban grids."
   authors:
-    - "Blessy Ashish Waydande (Team Leader)"
-    - "Prachi Vasant Suryawanshi ()"
-    - "Srushti Sanjay Shirale ()"
+    - "Blessy Ashish Waydande"
+    - "Prachi Vasant Suryawanshi"
+    - "Srushti Sanjay Shirale"
 
+# Define the "Shape" of your AI's world
+spec:
+  observation_space:
+    type: "Box"
+    shape: [4]
+    low: 0
+    high: 20
+  action_space:
+    type: "Discrete"
+    n: 2
+
+# Link to Member 1's environment code
 environment:
   module: "src.environment"
   class: "TrafficEnv"
-  # This tells OpenEnv where to find Member 1's code later
-  
-entrypoint: "inference.py"
 
-# These are the 3 scenarios we talked about earlier
+# The 3 Mandatory Grader Scenarios
 tasks:
-  - id: "clear_road_easy"
-    name: "Single Ambulance"
+  - id: "easy"
+    name: "Task 1: Clear Road"
     difficulty: "easy"
-  - id: "moderate_traffic_medium"
-    name: "Rush Hour Basic"
+    target_score: 1.0
+  - id: "medium"
+    name: "Task 2: Moderate Traffic"
     difficulty: "medium"
-  - id: "heavy_jam_hard"
-    name: "Sangli Market Jam"
+    target_score: 0.8
+  - id: "hard"
+    name: "Task 3: Sangli Market Jam"
     difficulty: "hard"
-  
+    target_score: 0.6
 
-app: "server.app:app"
-port: 8000
+# Deployment Config (Matching your HF Space)
+entrypoint: "inference.py"
+app: "app:app"
+port: 7860

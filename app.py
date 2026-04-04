@@ -4,7 +4,15 @@ import torch
 import os
 from stable_baselines3 import DQN
 from src.environment import TrafficEnv
+import subprocess
 
+# This triggers the mandatory inference logs for the Scaler Grader
+if 'grader_run' not in st.session_state:
+    st.info("🚀 Initializing Hackathon Grader Logs...")
+    # Runs your inference.py and pipes the output to the container logs
+    subprocess.Popen(["python", "inference.py"])
+    st.session_state.grader_run = True
+    
 # --- 1. Page Config & Branding ---
 st.set_page_config(page_title="Medi-Route Sangli", layout="wide", page_icon="🚑")
 
