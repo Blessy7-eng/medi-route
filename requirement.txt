@@ -1,0 +1,7 @@
+torch
+gymnasium
+stable-baselines3[extra]
+shimmy>=2.0
+pandas
+openai
+streamlit

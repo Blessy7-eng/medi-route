@@ -1,0 +1,37 @@
+# OpenEnv Project Configuration
+spec_version: 1
+name: medi_route
+type: space
+runtime: fastapi
+
+metadata:
+  name: "Medi-Route"
+  version: "0.1.0"
+  description: "AI-powered traffic signal control to prioritize emergency vehicles in high-density urban grids."
+  authors:
+    - "Blessy Ashish Waydande (Team Leader)"
+    - "Prachi Vasant Suryawanshi ()"
+    - "Srushti Sanjay Shirale ()"
+
+environment:
+  module: "src.environment"
+  class: "TrafficEnv"
+  # This tells OpenEnv where to find Member 1's code later
+  
+entrypoint: "inference.py"
+
+# These are the 3 scenarios we talked about earlier
+tasks:
+  - id: "clear_road_easy"
+    name: "Single Ambulance"
+    difficulty: "easy"
+  - id: "moderate_traffic_medium"
+    name: "Rush Hour Basic"
+    difficulty: "medium"
+  - id: "heavy_jam_hard"
+    name: "Sangli Market Jam"
+    difficulty: "hard"
+  
+
+app: "server.app:app"
+port: 8000
