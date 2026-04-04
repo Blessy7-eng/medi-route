@@ -1,0 +1,9 @@
+streamlit
+torch
+torchvision
+stable-baselines3
+shimmy
+gymnasium
+pandas
+numpy
+openai
