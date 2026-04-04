@@ -5,6 +5,18 @@ import gymnasium as gym
 from gymnasium import spaces
 
 class TrafficEnv(gym.Env):
+    # Inside your TrafficEnv class
+    @property
+    def ambulance_speed_kmh(self):
+        # Convert your grid speed (1 or 2) to a "realistic" km/h for the UI
+        amb = [v for v in self.vehicles if v.get('ev')]
+        if not amb: return 0
+        return 60 if amb[0]['speed'] > 0 else 0
+
+    @property
+    def waiting_cars_count(self):
+        return len([v for v in self.vehicles if v['speed'] == 0 and not v.get('ev')])
+    
     def __init__(self, difficulty="medium"):
         super(TrafficEnv, self).__init__()
         self.grid_size = 10
@@ -78,9 +90,10 @@ class TrafficEnv(gym.Env):
                 self.spawn_vehicle(direction=random.choice(["NS", "EW"]), is_emergency=False)
 
         obs = self.get_observation()
-        # Done if ambulance reaches 9 or leaves the grid
-        done = any(v['ev'] and (v['x'] >= 9 or v['y'] >= 9) for v in self.vehicles)
-        
+        # Done if ambulance reaches goal OR if 100 steps have passed
+        self.steps = getattr(self, 'steps', 0) + 1
+        reached_goal = any(v['ev'] and (v['x'] >= 9 or v['y'] >= 9) for v in self.vehicles)
+        done = reached_goal or self.steps >= 100
         # Add this inside step() in src/environment.py before returning
         self.vehicles = [v for v in self.vehicles if v['x'] < 10 and v['y'] < 10]
         return obs, reward, done, False, {}

@@ -15,4 +15,5 @@ COPY . /app
 RUN pip install --no-cache-dir torch stable-baselines3 shimmy gymnasium pandas openai
 
 # 6. Tell Docker to run your inference script when it starts
-CMD ["python", "inference.py"]
+# Replace your current CMD with this:
+CMD ["streamlit", "run", "app.py", "--server.port=7860", "--server.address=0.0.0.0"]
