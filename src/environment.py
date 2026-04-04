@@ -56,15 +56,13 @@ class TrafficEnv(gym.Env):
         
         return self.get_observation()
 
-    def spawn_vehicle(self, is_emergency=False):
-        # Randomize which lane they start in (0 to 9)
-        start_x = 0 
+    def spawn_vehicle(self, is_emergency=False, direction="NS"):
+        # Randomize start positions
         start_y = random.randint(0, 9) 
-        
-        # Randomize the initial distance so they aren't all in a line
         start_x = random.randint(0, 2) 
         
-        new_car = Vehicle(start_x, start_y, is_emergency)
+        # Pass the direction to the Vehicle creator
+        new_car = Vehicle(start_x, start_y, is_emergency, direction=direction)
         self.vehicles.append(new_car)
 
     def step(self, action):
