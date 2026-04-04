@@ -1,3 +1,12 @@
+---
+title: Medi Route
+emoji: 🚑
+colorFrom: red
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
 # 🚑 Medi-Route: AI-Powered Emergency Response
 
 > **Project Vision:** Medi-Route leverages Reinforcement Learning to solve critical emergency vehicle delays in Tier-2 Indian cities like Sangli, where narrow roads and unpredictable traffic can cost lives.
