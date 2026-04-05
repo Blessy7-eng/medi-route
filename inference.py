@@ -7,7 +7,7 @@ from src.environment import TrafficEnv
 
 # 1. MANDATORY: Environment Variables for the Grader
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Meta-Llama-3.1-8B-Instruct")
+MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Llama-3.2-3B-Instruct")
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 
 def get_llm_summary(total_reward, frames):
