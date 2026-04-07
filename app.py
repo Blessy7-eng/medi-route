@@ -40,7 +40,7 @@ def step_endpoint(action: int):
 
 # Function to run the API in the background
 def run_api():
-    uvicorn.run(api, host="0.0.0.0", port=8000)
+    uvicorn.run(api, host="0.0.0.0", port=7860)
 
 # Start API thread if not already running
 if 'api_started' not in st.session_state:
