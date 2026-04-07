@@ -27,7 +27,7 @@
 
 set -uo pipefail
 
-DOCKER_BUILD_TIMEOUT=1200
+DOCKER_BUILD_TIMEOUT=2500
 if [ -t 1 ]; then
   RED='\033[0;31m'
   GREEN='\033[0;32m'
