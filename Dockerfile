@@ -16,11 +16,15 @@ RUN apt-get update && apt-get install -y \
 COPY . /app
 
 # 5. Install Python dependencies
+# 5. Install Python dependencies
 RUN python -m pip install --no-cache-dir --upgrade pip
-# We explicitly add uvicorn here to ensure the Streamlit ASGI server starts
-RUN python -m pip install --no-cache-dir uvicorn fastapi streamlit
-RUN python -m pip install --no-cache-dir -r requirements.txt
 
+# Combined installation to save time and layers
+RUN python -m pip install --no-cache-dir \
+    uvicorn \
+    fastapi \
+    streamlit \
+    -r requirements.txt
 # 6. Expose the port Hugging Face expects
 EXPOSE 7860
 
