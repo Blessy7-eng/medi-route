@@ -4,21 +4,57 @@ import torch
 import os
 import sys
 import subprocess
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List, Dict, Any
+import uvicorn
+from threading import Thread
 from stable_baselines3 import DQN
 from src.environment import TrafficEnv
 
-# --- 0. Hackathon Compliance: Mandatory Grader Logs ---
+# --- 1. OpenEnv API Compliance (MANDATORY FOR GRADER) ---
+# This section ensures the ./validate-submission.sh script passes Step 1
+api = FastAPI()
+env_api = TrafficEnv(difficulty="medium")
+
+class StepResponse(BaseModel):
+    observation: List[float]
+    reward: float
+    done: bool
+    info: Dict[str, Any]
+
+@api.post("/reset")
+def reset_endpoint():
+    obs, info = env_api.reset()
+    return {"observation": obs.tolist(), "info": info}
+
+@api.post("/step")
+def step_endpoint(action: int):
+    obs, reward, done, truncated, info = env_api.step(action)
+    return {
+        "observation": obs.tolist(),
+        "reward": float(reward),
+        "done": bool(done or truncated),
+        "info": info
+    }
+
+# Function to run the API in the background
+def run_api():
+    uvicorn.run(api, host="0.0.0.0", port=7860) # Port 7860 is HF standard
+
+# Start API thread if not already running
+if 'api_started' not in st.session_state:
+    thread = Thread(target=run_api, daemon=True)
+    thread.start()
+    st.session_state.api_started = True
+
+# --- 2. Hackathon Compliance: Mandatory Grader Logs ---
 if 'grader_run' not in st.session_state:
-    subprocess.Popen(
-        [sys.executable, "inference.py"], 
-        stdout=None, 
-        stderr=None, 
-        bufsize=1, 
-        universal_newlines=True
-    )
+    # This triggers your inference.py to generate [START], [STEP], [END] tags
+    subprocess.Popen([sys.executable, "inference.py"])
     st.session_state.grader_run = True
 
-# --- 1. Page Config & Branding ---
+# --- 3. Streamlit UI (The "Sangli" Visualizer) ---
 st.set_page_config(page_title="Medi-Route Sangli", layout="wide", page_icon="🚑")
 
 st.markdown("""
@@ -28,13 +64,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. Initialize Environment & Model (Moved UP to prevent NameError) ---
 if 'env' not in st.session_state:
     st.session_state.env = TrafficEnv(difficulty="medium")
     st.session_state.total_reward = 0
     st.session_state.done = False
 
-# Define env for easy access in the script
 env = st.session_state.env
 
 @st.cache_resource
@@ -45,10 +79,8 @@ def load_brain():
 
 model = load_brain()
 
-# --- 3. Sidebar: Controls & Live Analytics ---
+# --- 4. Sidebar Controls ---
 st.sidebar.header("🕹️ Simulation Control")
-
-# Now 'env' is defined, so these lines won't crash
 st.sidebar.subheader("📉 Live Progress")
 current_steps = getattr(env, 'steps', 0)
 st.sidebar.progress(min(current_steps / 50, 1.0)) 
@@ -57,84 +89,55 @@ st.sidebar.write(f"⏱️ Step: {current_steps} / 50")
 difficulty = st.sidebar.selectbox("Select Scenario", ["easy", "medium", "hard"])
 mode = st.sidebar.radio("Control Mode", ["AI Optimized", "Manual Override"])
 
-manual_action = 0
-if mode == "Manual Override":
-    is_ew_green = st.sidebar.toggle("Switch to EW Green", value=False)
-    manual_action = 1 if is_ew_green else 0
-
 if st.sidebar.button("🚀 Restart Simulation"):
     st.session_state.env = TrafficEnv(difficulty=difficulty)
     st.session_state.total_reward = 0
     st.session_state.done = False
     st.rerun()
 
-st.sidebar.markdown("---")
 st.sidebar.header("📊 Real-Time Analytics")
 score_metric = st.sidebar.empty()
 speed_metric = st.sidebar.empty()
 traffic_metric = st.sidebar.empty()
 
-# --- 4. Main UI Layout ---
+# --- 5. Main Simulation UI ---
 st.title("🚑 Medi-Route: AI Emergency Response")
-st.subheader("📍 Location: Sangli-Miraj Road (High Density Corridor)")
-st.caption("Simulating North-South Flow at Ganpati Mandir Road Intersection")
+st.subheader("📍 Location: Sangli-Miraj Road")
 
 grid_placeholder = st.empty()
 signal_col1, signal_col2 = st.columns(2)
 
-# --- 5. Simulation Loop ---
 if not st.session_state.done:
-    st.toast("Grader script running in background... Check 'Container Logs' for scoring tags.")
-    
     for frame in range(100):
-        # 1. Decision Logic
+        # AI or Manual Decision
         if mode == "AI Optimized" and model is not None:
             obs = env.get_observation()
             action, _ = model.predict(obs, deterministic=True)
-        elif mode == "AI Optimized":
-            # Heuristic fallback
-            action = 0 if any(v.get('ev') and v['dir'] == "NS" for v in env.vehicles) else 1
         else:
-            action = manual_action
+            action = 0 # Default to NS_GREEN for demo flow
 
-        # 2. Step the environment
         obs, reward, done, _, _ = env.step(action)
         st.session_state.total_reward += reward
 
-        # 3. UI: Signal Phase Indicators
-        with signal_col1:
-            light_icon = "🟢" if action == 0 else "🔴"
-            st.markdown(f"### NS Signal: {light_icon}")
-        with signal_col2:
-            light_icon = "🟢" if action == 1 else "🔴"
-            st.markdown(f"### EW Signal: {light_icon}")
+        # UI Updates
+        with signal_col1: st.markdown(f"### NS Signal: {'🟢' if action == 0 else '🔴'}")
+        with signal_col2: st.markdown(f"### EW Signal: {'🟢' if action == 1 else '🔴'}")
 
-        # 4. Create the Visual Grid
+        # Grid Rendering
         grid = [["⬛" for _ in range(10)] for _ in range(10)]
-        for i in range(10):
-            grid[5][i] = "🛣️" # East-West
-            grid[i][5] = "🛣️" # North-South
-
+        for i in range(10): grid[5][i] = "🛣️"; grid[i][5] = "🛣️"
         for v in env.vehicles:
-            icon = "🚑" if v.get('ev') and v['speed'] > 0 else "🚨" if v.get('ev') else "🚗" if v['speed'] > 0 else "🛑"
-            y_pos = min(max(int(v['y']), 0), 9)
-            x_pos = min(max(int(v['x']), 0), 9)
-            grid[y_pos][x_pos] = icon
-
-        grid_placeholder.table(grid)
-
-        # 5. Update Stat Counters
-        amb_speed = 60 if any(v.get('ev') and v['speed'] > 0 for v in env.vehicles) else 0
-        waiting_cars = len([v for v in env.vehicles if v['speed'] == 0 and not v.get('ev')])
+            icon = "🚑" if v.get('ev') else "🚗"
+            grid[min(max(int(v['y']), 0), 9)][min(max(int(v['x']), 0), 9)] = icon
         
-        score_metric.metric("Total Reward", f"{st.session_state.total_reward:.1f}", delta=f"{reward:.1f}")
-        speed_metric.metric("Ambulance Speed", f"{amb_speed} km/h")
-        traffic_metric.metric("Waiting Traffic", f"{waiting_cars} Vehicles")
+        grid_placeholder.table(grid)
+        
+        # Metrics
+        score_metric.metric("Total Reward", f"{st.session_state.total_reward:.1f}")
+        speed_metric.metric("Ambulance Speed", "60 km/h" if any(v.get('ev') and v['speed'] > 0 for v in env.vehicles) else "0 km/h")
 
         if done:
             st.session_state.done = True
-            st.balloons()
-            st.success(f"Ambulance Reached Hospital! Total Steps: {env.steps} 🎉")
+            st.success("Ambulance Reached Hospital! 🎉")
             break
-
         time.sleep(0.3)
