@@ -1,12 +1,12 @@
 import streamlit as st
 import time
 import os
+import sys
 from stable_baselines3 import DQN
 from src.environment import TrafficEnv
 
-# --- 1. Wrap everything in a main() function for OpenEnv ---
+# --- 1. The main() function must contain ALL Streamlit logic ---
 def main():
-    # --- UI Configuration ---
     st.set_page_config(page_title="Medi-Route Sangli", layout="wide", page_icon="🚑")
 
     st.markdown("""
@@ -26,10 +26,12 @@ def main():
 
     @st.cache_resource
     def load_brain():
-        if os.path.exists("medi_route_brain.zip"):
+        model_path = "medi_route_brain.zip"
+        if os.path.exists(model_path):
             try:
-                return DQN.load("medi_route_brain.zip")
-            except:
+                return DQN.load(model_path)
+            except Exception as e:
+                st.error(f"Error loading model: {e}")
                 return None
         return None
 
@@ -55,45 +57,38 @@ def main():
 
     grid_placeholder = st.empty()
     signal_col1, signal_col2 = st.columns(2)
-
-    # Use a container for the status so it stays at the top
     status_msg = st.empty()
 
     # --- Simulation Loop ---
     if not st.session_state.done:
-        # We use a placeholder to prevent UI flickering
         while not st.session_state.done:
             # Decision Logic
             if mode == "AI Optimized" and model is not None:
-                # Use the environment's observation method
                 obs, _ = env.reset() if st.session_state.total_reward == 0 else (env._get_obs(), {})
                 action, _ = model.predict(obs, deterministic=True)
             else:
-                action = 0 # Default manual flow
+                action = 0 
 
             obs, reward, done, truncated, info = env.step(int(action))
             st.session_state.total_reward += reward
 
-            # Signal UI
+            # Update Signals
             signal_col1.markdown(f"### NS Signal: {'🟢' if action == 0 else '🔴'}")
             signal_col2.markdown(f"### EW Signal: {'🟢' if action == 1 else '🔴'}")
 
-            # Grid Rendering (10x10)
+            # Simple 10x10 Grid Rendering
             grid = [["⬛" for _ in range(10)] for _ in range(10)]
             for i in range(10): 
-                grid[5][i] = "🛣️" # Horizontal Road
-                grid[i][5] = "🛣️" # Vertical Road
+                grid[5][i] = "🛣️" 
+                grid[i][5] = "🛣️" 
                 
             for v in env.vehicles:
                 icon = "🚑" if v.get('ev') else "🚗"
-                # Boundary safety for 10x10 grid
                 py = min(max(int(v['y']), 0), 9)
                 px = min(max(int(v['x']), 0), 9)
                 grid[py][px] = icon
             
             grid_placeholder.table(grid)
-            
-            # Update Analytics
             score_metric.metric("Total Reward", f"{st.session_state.total_reward:.1f}")
             
             if done or truncated:
@@ -104,5 +99,6 @@ def main():
             
             time.sleep(0.3)
 
+# --- 2. MANDATORY: The if __name__ == "__main__" block ---
 if __name__ == "__main__":
     main()
