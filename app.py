@@ -104,6 +104,5 @@ def main():
             
             time.sleep(0.3)
 
-# --- 2. Required Boilerplate for Python and OpenEnv ---
 if __name__ == "__main__":
     main()
