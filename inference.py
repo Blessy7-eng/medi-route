@@ -1,6 +1,7 @@
 import os
 import time
 import uvicorn
+import sys
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict, Any
@@ -26,7 +27,11 @@ def run_grader_evaluation():
             client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
             prompt = (f"In a traffic simulation for {task_id}, the AI achieved a reward of "
                       f"{round(total_reward, 2)} in {frames} steps. Provide a 1-sentence evaluation.")
-            completion = client.chat.completions.create(model=MODEL_NAME, messages=[{"role": "user", "content": prompt}], max_tokens=60)
+            completion = client.chat.completions.create(
+                model=MODEL_NAME, 
+                messages=[{"role": "user", "content": prompt}], 
+                max_tokens=60
+            )
             return completion.choices[0].message.content.strip()
         except Exception:
             return "LLM Summary Status: Connected but returned error."
@@ -38,7 +43,7 @@ def run_grader_evaluation():
         model = DQN.load(model_path)
     except Exception:
         model = None
-        print(f"⚠️ Warning: {model_path} not found.")
+        print(f"⚠️ Warning: {model_path} not found. Using random baseline.")
 
     for task_id, diff in scenarios:
         print(f"[START] {task_id}", flush=True)
@@ -46,23 +51,26 @@ def run_grader_evaluation():
         obs, _ = env.reset()
         total_reward, frames = 0, 0
 
+        # Run for 100 steps
         for step in range(100):
             action = int(model.predict(obs, deterministic=True)[0]) if model else 0
             obs, reward, done, truncated, _ = env.step(action)
             total_reward += reward
             frames += 1
-            print(f"[STEP] {step} | Action: {action} | Reward: {round(reward, 2)}", flush=True)
-            if done or truncated: break
+            # Periodic logging for the grader
+            if step % 20 == 0:
+                print(f"[STEP] {step} | Action: {action} | Reward: {round(reward, 2)}", flush=True)
+            if done or truncated: 
+                break
         
         summary = get_llm_summary(total_reward, frames, task_id)
         final_score = round(min(max(total_reward / 50, 0.0), 1.0), 2)
         print(f"AI Evaluation: {summary}", flush=True)
         print(f"[END] {task_id} | Final Score: {final_score}", flush=True)
-        print("-" * 30)
+        print("-" * 30, flush=True)
 
-# --- 3. API Endpoints (Required for Health Checks & Validator) ---
+# --- 3. API Endpoints ---
 
-# ADDED THIS: Responds to "/" to stop 404 errors in logs
 @app.get("/")
 def read_root():
     return {"status": "Medi-Route API is running", "location": "Sangli-Miraj Road"}
@@ -84,10 +92,14 @@ def step_endpoint(action: int):
 
 # --- 4. Execution Entry Point ---
 if __name__ == "__main__":
-    # First, run the script portion for logs
+    # FIRST: Run the offline evaluation loop to generate the [START]/[END] logs
+    print("🚀 PHASE 1: Running Grader Evaluation Loop...", flush=True)
     run_grader_evaluation()
-    print("--- ALL EVALUATIONS COMPLETE ---", flush=True)
     
-    # Second, start the FastAPI server on port 7860
-    print("🚀 Medi-Route API Server starting on port 7860...")
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    # SECOND: Start the server to pass the Phase 2 "Ping" check
+    print("📡 PHASE 2: Starting API Server on Port 7860...", flush=True)
+    try:
+        uvicorn.run(app, host="0.0.0.0", port=7860, log_level="info")
+    except Exception as e:
+        print(f"Error starting server: {e}")
+        sys.exit(1)
