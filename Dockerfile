@@ -1,27 +1,16 @@
-FROM python:3.10-slim
+FROM python:3.10
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    git \
-    dos2unix \
-    && rm -rf /var/lib/apt/lists/*
+# Copy everything from your local folder to the container
+COPY . .
 
-COPY . /app
+RUN pip install -r requirements.txt
 
-# Upgrade pip and install requirements
-RUN python -m pip install --no-cache-dir --upgrade pip && \
-    python -m pip install --no-cache-dir uvicorn fastapi streamlit -r requirements.txt
+# Make start.sh executable
+RUN chmod +x start.sh
 
-# Ensure start.sh is executable and has Linux line endings
-RUN dos2unix start.sh && \
-    sed -i 's/\r$//' start.sh && \
-    chmod +x start.sh
-
+# The port Hugging Face expects
 EXPOSE 7860
 
-# Start via the shell script
 CMD ["./start.sh"]
