@@ -106,15 +106,22 @@ def step_endpoint(action: int):
     }
 
 # --- 4. Execution Entry Point ---
+import os
+import uvicorn
+from fastapi import FastAPI
+
+# ... your existing FastAPI app and RL logic ...
+
 if __name__ == "__main__":
-    # Ensure all printed output is flushed immediately for the grader logs
-    print("🚀 Initializing Medi-Route Grader Logs...", flush=True)
-    run_grader_evaluation()
+    # 1. Use the PORT environment variable if it exists, default to 7860
+    port = int(os.environ.get("PORT", 7860))
     
-    print("📡 Starting FastAPI Server on Port 7860...", flush=True)
+    # 2. Add a 'try-except' block to handle the 'Address already in use' error
     try:
-        # Standard Hugging Face port
-        uvicorn.run(app, host="0.0.0.0", port=7860, log_level="info")
+        print(f"Starting server on port {port}...")
+        uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
     except Exception as e:
-        print(f"FATAL ERROR: Port 7860 failed to bind: {e}", flush=True)
-        sys.exit(1)
+        if "address already in use" in str(e).lower():
+            print(f"Port {port} is already in use. The environment may have already started the process.")
+        else:
+            raise e
