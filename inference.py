@@ -179,3 +179,22 @@ def step(action: int):
 # DO NOT RUN UVICORN HERE
 # HuggingFace/OpenEnv starts the server automatically
 # ---------------------------------------------------
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+
+    # 1. First, run the evaluation to generate the logs for Phase 2
+    print("--- Starting Grader Evaluation ---", flush=True)
+    try:
+        run_grader_evaluation()
+    except Exception as e:
+        print(f"Grader Evaluation Error: {e}", flush=True)
+
+    # 2. Then, start the server and KEEP IT RUNNING
+    port = int(os.environ.get("PORT", 7860))
+    print(f"Validator Mode: Starting API on port {port}", flush=True)
+    
+    # reload=False is critical to prevent the 'address already in use' error
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
