@@ -45,4 +45,7 @@ This project is fully Dockerized for the Meta PyTorch OpenEnv Hackathon.
 2. **Run:** `docker run medi-route`
 
 ---
-**Team:** [Your Names Here] | **Location:** Sangli, Maharashtra
+**Team:** 1. Blessy Ashish Waydande
+          2. Prachi Vasant Suryawanshi
+          3. Srushti Sanjay Shirale
+| **Location:** Sangli, Maharashtra
