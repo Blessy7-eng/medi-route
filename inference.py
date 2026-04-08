@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -113,9 +112,10 @@ from fastapi import FastAPI
 # ... your existing FastAPI app and RL logic ...
 
 if __name__ == "__main__":
-    # Ensure ONLY the FastAPI server runs on the required port
+    import uvicorn
+    # The validator usually provides the PORT; 7860 is the HF/Scaler default
     port = int(os.environ.get("PORT", 7860))
     
-    # Crucial: Do not import or call your Streamlit app.py here
     print(f"Validator Mode: Starting API on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # reload=False prevents the double-start issue that sometimes causes port errors
+    uvicorn.run("inference:app", host="0.0.0.0", port=port, reload=False)
