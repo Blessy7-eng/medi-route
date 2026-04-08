@@ -13,10 +13,11 @@ COPY . /app
 RUN python -m pip install --no-cache-dir --upgrade pip
 RUN python -m pip install --no-cache-dir uvicorn fastapi streamlit -r requirements.txt
 
-# Make the script executable
-RUN chmod +x start.sh
+# Fix line endings (just in case you're on Windows) and set permissions
+RUN apt-get update && apt-get install -y dos2unix && \
+    dos2unix start.sh && \
+    chmod +x start.sh
 
 EXPOSE 7860
 
-# Use JSON format (Exec form) to prevent the warning
 CMD ["./start.sh"]
