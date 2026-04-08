@@ -104,18 +104,29 @@ def step_endpoint(action: int):
         "info": info
     }
 
-# --- 4. Execution Entry Point ---
-import os
-import uvicorn
-from fastapi import FastAPI
-
 # ... your existing FastAPI app and RL logic ...
 
-if __name__ == "__main__":
-    import uvicorn
-    # The validator usually provides the PORT; 7860 is the HF/Scaler default
-    port = int(os.environ.get("PORT", 7860))
+# if __name__ == "__main__":
+#     import uvicorn
+#     # The validator usually provides the PORT; 7860 is the HF/Scaler default
+#     port = int(os.environ.get("PORT", 7860))
     
-    print(f"Validator Mode: Starting API on port {port}")
-    # reload=False prevents the double-start issue that sometimes causes port errors
+#     print(f"Validator Mode: Starting API on port {port}")
+#     # reload=False prevents the double-start issue that sometimes causes port errors
+#     uvicorn.run("inference:app", host="0.0.0.0", port=port, reload=False)
+
+if __name__ == "__main__":
+    # 1. Run the evaluation logic first to generate logs for the validator
+    print("--- Starting Grader Evaluation ---", flush=True)
+    try:
+        run_grader_evaluation()
+    except Exception as e:
+        print(f"Grader Evaluation Error: {e}", flush=True)
+    
+    # 2. Start the API server
+    import uvicorn
+    port = int(os.environ.get("PORT", 7860))
+    print(f"Validator Mode: Starting API on port {port}", flush=True)
+    
+    # reload=False is critical to prevent the "Address already in use" error
     uvicorn.run("inference:app", host="0.0.0.0", port=port, reload=False)
