@@ -11,11 +11,9 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# 4. Copy your project files
-# Make sure your requirements.txt is in the root directory
+# 4. Copy your project files (including uv.lock and app.py)
 COPY . /app
 
-# 5. Install Python dependencies
 # 5. Install Python dependencies
 RUN python -m pip install --no-cache-dir --upgrade pip
 
@@ -25,9 +23,11 @@ RUN python -m pip install --no-cache-dir \
     fastapi \
     streamlit \
     -r requirements.txt
+
 # 6. Expose the port Hugging Face expects
 EXPOSE 7860
 
-# 7. Start the app
-# Using "streamlit run" is the standard for HF Spaces
-CMD ["python", "server.py"]
+# 7. Start both the UI and the Inference API
+# We run Streamlit in the background on a different port, 
+# and let inference.py own the main port 7860 for the validator.
+CMD streamlit run app.py --server.port 8501 --server.address 0.0.0.0 & python inference.py
