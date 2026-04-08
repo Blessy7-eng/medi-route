@@ -113,15 +113,9 @@ from fastapi import FastAPI
 # ... your existing FastAPI app and RL logic ...
 
 if __name__ == "__main__":
-    # 1. Use the PORT environment variable if it exists, default to 7860
+    # Ensure ONLY the FastAPI server runs on the required port
     port = int(os.environ.get("PORT", 7860))
     
-    # 2. Add a 'try-except' block to handle the 'Address already in use' error
-    try:
-        print(f"Starting server on port {port}...")
-        uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
-    except Exception as e:
-        if "address already in use" in str(e).lower():
-            print(f"Port {port} is already in use. The environment may have already started the process.")
-        else:
-            raise e
+    # Crucial: Do not import or call your Streamlit app.py here
+    print(f"Validator Mode: Starting API on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
