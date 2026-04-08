@@ -100,5 +100,6 @@ def main():
             time.sleep(0.3)
 
 # --- 2. MANDATORY: The if __name__ == "__main__" block ---
+# NOTE: This MUST NOT be indented. It must touch the far left margin.
 if __name__ == "__main__":
     main()
