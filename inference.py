@@ -60,7 +60,13 @@ def run_grader_evaluation():
         print(f"[END] {task_id} | Final Score: {final_score}", flush=True)
         print("-" * 30)
 
-# --- 3. API Endpoints (Required to pass Step 1) ---
+# --- 3. API Endpoints (Required for Health Checks & Validator) ---
+
+# ADDED THIS: Responds to "/" to stop 404 errors in logs
+@app.get("/")
+def read_root():
+    return {"status": "Medi-Route API is running", "location": "Sangli-Miraj Road"}
+
 @app.post("/reset")
 def reset_endpoint():
     obs, info = env_api.reset()
