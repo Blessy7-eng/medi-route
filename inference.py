@@ -13,14 +13,16 @@ from src.environment import TrafficEnv
 # --- 1. Setup API and Environment ---
 app = FastAPI()
 
-# CRITICAL: Allow CORS so the Scaler validator can send POST requests
+# FIX: Added CORS to prevent the 403 Forbidden error
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Initialize the environment globally for the API endpoints
 env_api = TrafficEnv(difficulty="medium")
 
 # Mandatory Variables for the Grader
@@ -28,7 +30,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "meta-llama/Meta-Llama-3-8B-Instruct")
 API_KEY = os.getenv("HF_TOKEN")
 
-# --- 2. Evaluation Logic (Required for Grader Logs) ---
+# --- 2. Evaluation Logic (Mandatory for Logs) ---
 def run_grader_evaluation():
     def get_llm_summary(total_reward, frames, task_id):
         if not API_KEY:
@@ -53,7 +55,7 @@ def run_grader_evaluation():
         model = DQN.load(model_path)
     except Exception:
         model = None
-        print(f"⚠️ Warning: {model_path} not found. Running random baseline.")
+        print(f"⚠️ Warning: {model_path} not found. Running random baseline.", flush=True)
 
     for task_id, diff in scenarios:
         print(f"[START] {task_id}", flush=True)
@@ -76,14 +78,21 @@ def run_grader_evaluation():
         print(f"[END] {task_id} | Final Score: {final_score}", flush=True)
         print("-" * 30, flush=True)
 
-# --- 3. API Endpoints ---
+# --- 3. API Endpoints (Required for Phase 1 & 2) ---
+
 @app.get("/")
 def read_root():
     return {"status": "Medi-Route API is running", "location": "Sangli-Miraj Road"}
 
+# FIX: Added health check specifically for the OpenEnv validator
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
 @app.post("/reset")
 def reset_endpoint():
     obs, info = env_api.reset()
+    # Explicitly casting to list to ensure JSON serializability
     return {"observation": obs.tolist(), "info": info}
 
 @app.post("/step")
@@ -98,14 +107,14 @@ def step_endpoint(action: int):
 
 # --- 4. Execution Entry Point ---
 if __name__ == "__main__":
-    # FIRST: Print logs for Phase 1 & 2
+    # Ensure all printed output is flushed immediately for the grader logs
     print("🚀 Initializing Medi-Route Grader Logs...", flush=True)
     run_grader_evaluation()
     
-    # SECOND: Start server to pass the "Ping" and "Reset" checks
     print("📡 Starting FastAPI Server on Port 7860...", flush=True)
     try:
-        uvicorn.run(app, host="0.0.0.0", port=7860)
+        # Standard Hugging Face port
+        uvicorn.run(app, host="0.0.0.0", port=7860, log_level="info")
     except Exception as e:
-        print(f"Port 7860 failed: {e}")
+        print(f"FATAL ERROR: Port 7860 failed to bind: {e}", flush=True)
         sys.exit(1)

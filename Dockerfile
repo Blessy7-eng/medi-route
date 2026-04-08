@@ -2,15 +2,14 @@ FROM python:3.10
 
 WORKDIR /app
 
-# Copy everything from your local folder to the container
+# Copy everything to ensure inference.py is at the root
 COPY . .
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Make start.sh executable
+# Ensure the script is executable
 RUN chmod +x start.sh
 
-# The port Hugging Face expects
 EXPOSE 7860
 
 CMD ["./start.sh"]
