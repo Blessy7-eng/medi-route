@@ -27,6 +27,26 @@ Our AI isn't just told to be fast; it's taught through a balanced scoring system
 * **Why penalize normal traffic?** We chose a small penalty for normal cars to ensure the AI doesn't create a "city-wide jam" just to save one vehicle. It learns to find the *perfect gap*.
 
 ---
+## 🧩 Reinforcement Learning Framework
+
+### 1. Action Space
+The agent operates in a **Discrete Action Space** with 2 possible actions:
+* `0`: Set North-South signals to **GREEN** (East-West becomes RED).
+* `1`: Set East-West signals to **GREEN** (North-South becomes RED).
+
+### 2. Observation Space
+The agent receives a flattened state representation (Observation Vector) containing:
+* **Vehicle Counts:** Number of vehicles currently waiting in each lane.
+* **Ambulance Position:** The $(x, y)$ coordinates of the Emergency Vehicle.
+* **Signal State:** The current phase of the traffic lights.
+* **Distance to Goal:** Proximity of the ambulance to the hospital.
+
+### 🎯 Task Descriptions
+* **Easy:** Single ambulance, low traffic density (1-5 cars).
+* **Medium:** Mixed traffic flow, ambulance starting at a random intersection.
+* **Hard (Sangli Rush):** Max density (20+ cars), randomized spawning, and complex arrival patterns.
+
+---
 
 ## 📊 Results
 Our agent was tested across three rigorous scenarios:
