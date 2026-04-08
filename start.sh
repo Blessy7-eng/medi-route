@@ -1,7 +1,7 @@
 #!/bin/bash
-# 1. Run the AI logic (inference.py) to generate the required [START]/[END] logs.
-# This script must NOT start a server/uvicorn.
+# 1. Run the AI logic to generate [START]/[END] logs for the grader.
+# Ensure inference.py DOES NOT contain 'uvicorn.run' or 'app.run'.
 python inference.py
 
-# 2. Only AFTER inference is done, start the UI on the expected port.
+# 2. Start the Streamlit UI ONLY after the grader logic finishes.
 streamlit run app.py --server.port 7860 --server.address 0.0.0.0
