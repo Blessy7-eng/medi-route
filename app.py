@@ -21,6 +21,8 @@ def main():
         st.session_state.env = TrafficEnv(difficulty="medium")
         st.session_state.total_reward = 0
         st.session_state.done = False
+        # Initialize obs properly
+        st.session_state.obs, _ = st.session_state.env.reset()
 
     env = st.session_state.env
 
@@ -39,11 +41,12 @@ def main():
 
     # --- Sidebar ---
     st.sidebar.header("🕹️ Simulation Control")
-    difficulty = st.sidebar.selectbox("Select Scenario", ["easy", "medium", "hard"])
+    difficulty = st.sidebar.selectbox("Select Scenario", ["easy", "medium", "hard"], index=1)
     mode = st.sidebar.radio("Control Mode", ["AI Optimized", "Manual Override"])
 
     if st.sidebar.button("🚀 Restart Simulation"):
         st.session_state.env = TrafficEnv(difficulty=difficulty)
+        st.session_state.obs, _ = st.session_state.env.reset()
         st.session_state.total_reward = 0
         st.session_state.done = False
         st.rerun()
@@ -62,14 +65,17 @@ def main():
     # --- Simulation Loop ---
     if not st.session_state.done:
         while not st.session_state.done:
-            # Decision Logic
+            # Decision Logic: Use the stored observation instead of calling private _get_obs()
             if mode == "AI Optimized" and model is not None:
-                obs, _ = env.reset() if st.session_state.total_reward == 0 else (env._get_obs(), {})
-                action, _ = model.predict(obs, deterministic=True)
+                action, _ = model.predict(st.session_state.obs, deterministic=True)
             else:
                 action = 0 
 
-            obs, reward, done, truncated, info = env.step(int(action))
+            # Step the environment
+            new_obs, reward, done, truncated, info = env.step(int(action))
+            
+            # Update state with the new observation for the next loop
+            st.session_state.obs = new_obs
             st.session_state.total_reward += reward
 
             # Update Signals
@@ -100,6 +106,5 @@ def main():
             time.sleep(0.3)
 
 # --- 2. MANDATORY: The if __name__ == "__main__" block ---
-# NOTE: This MUST NOT be indented. It must touch the far left margin.
 if __name__ == "__main__":
     main()
