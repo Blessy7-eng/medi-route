@@ -120,7 +120,7 @@ Bash
 ```
 docker run -p 7860:7860 medi-route
 ```
-## 🧪 API Testing
+**🧪 API Testing**
 Once the server is running, you can interact with the RL environment using curl or Postman:
 
 **Reset the Environment:**
@@ -134,20 +134,5 @@ Take an Action (0 for North-South Green, 1 for East-West Green):
 ```
 curl -X POST "http://localhost:7860/step?action=0"
 ```
-## 🛠️ How to Run
-This project is fully Dockerized for the Meta PyTorch OpenEnv Hackathon.
-
-1. **Build:**
-```
-docker build -t medi-route .
-```
-3. **Run:**
-```
-docker run medi-route
-```
-
----
-**Team:** 1. Blessy Ashish Waydande
-          2. Prachi Vasant Suryawanshi
-          3. Srushti Sanjay Shirale
+3. Srushti Sanjay Shirale
 | **Location:** Sangli, Maharashtra
