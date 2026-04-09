@@ -57,13 +57,14 @@ Our agent was tested across three rigorous scenarios:
 **The Result:** The AI achieved a **1.0 Perfect Score**, reducing ambulance wait time to nearly zero while maintaining a steady flow for 80% of civilian traffic.
 
 ---
-📥 Installation & Local Setup
+
+## 📥 Installation & Local Setup
 If you want to run Medi-Route on your local machine, follow these steps:
 
-1. Clone the Repository
+1. **Clone the Repository**
 Bash
-git clone https://github.com/Blessy7-eng/medi-route.git
-cd medi-route
+```git clone https://github.com/Blessy7-eng/medi-route.git
+cd medi-route```
 2. Manual Installation (Python 3.10+)
 It is recommended to use a virtual environment to avoid dependency conflicts.
 
