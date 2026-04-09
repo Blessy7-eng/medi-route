@@ -63,15 +63,20 @@ If you want to run Medi-Route on your local machine, follow these steps:
 
 1. **Clone the Repository**
 Bash
-```git clone https://github.com/Blessy7-eng/medi-route.git
-cd medi-route```
-2. Manual Installation (Python 3.10+)
+
+```
+git clone https://github.com/Blessy7-eng/medi-route.git
+cd medi-route
+```
+
+2. **Manual Installation (Python 3.10+)**
 It is recommended to use a virtual environment to avoid dependency conflicts.
 
 Bash
+```
 # Create a virtual environment
 python -m venv venv
-
+```
 # Activate it (Windows)
 venv\Scripts\activate
 
