@@ -103,7 +103,7 @@ To visualize the traffic simulation:
 
 Bash
 ```
-streamlit run streamlit_app.py
+streamlit run ui.py
 ```
 🐳 Running with Docker
 This is the preferred method for deployment and matches the Meta Hackathon environment.
