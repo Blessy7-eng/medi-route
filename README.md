@@ -57,7 +57,61 @@ Our agent was tested across three rigorous scenarios:
 **The Result:** The AI achieved a **1.0 Perfect Score**, reducing ambulance wait time to nearly zero while maintaining a steady flow for 80% of civilian traffic.
 
 ---
+📥 Installation & Local Setup
+If you want to run Medi-Route on your local machine, follow these steps:
 
+1. Clone the Repository
+Bash
+git clone https://github.com/Blessy7-eng/medi-route.git
+cd medi-route
+2. Manual Installation (Python 3.10+)
+It is recommended to use a virtual environment to avoid dependency conflicts.
+
+Bash
+# Create a virtual environment
+python -m venv venv
+
+# Activate it (Windows)
+venv\Scripts\activate
+
+# Activate it (Linux/Mac)
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+3. Running the API Server
+To test the validator-style API locally:
+
+Bash
+python inference.py
+The API will be available at http://localhost:7860. You can test the health check at http://localhost:7860/health.
+
+4. Running the Dashboard (Streamlit)
+To visualize the traffic simulation:
+
+Bash
+streamlit run streamlit_app.py
+🐳 Running with Docker
+This is the preferred method for deployment and matches the Meta Hackathon environment.
+
+Build the image:
+
+Bash
+docker build -t medi-route .
+Run the container:
+
+Bash
+docker run -p 7860:7860 medi-route
+🧪 API Testing
+Once the server is running, you can interact with the RL environment using curl or Postman:
+
+**Reset the Environment:**
+
+
+`curl -X POST http://localhost:7860/reset`
+Take an Action (0 for North-South Green, 1 for East-West Green):
+
+`curl -X POST "http://localhost:7860/step?action=0"`
 ## 🛠️ How to Run
 This project is fully Dockerized for the Meta PyTorch OpenEnv Hackathon.
 
