@@ -87,7 +87,7 @@ source venv/bin/activate
 ```
 # Install dependencies
 ```
-pip install -r requirements.txt
+pip install -r requirements-deploy.txt
 ```
 3. **Running the API Server**
 To test the validator-style API locally:
